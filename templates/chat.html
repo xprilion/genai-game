@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div id="chat-box" class="bg-light p-3 mb-3 rounded">
-            <blockquote style="border-left: 4px solid #43a047;">Bot: Hello! How can I help you today?</blockquote>
-        </div>
-        <div class="input-group">
-            <input id="chat-input" type="text" class="form-control" placeholder="Type your message...">
-            <div class="input-group-append">
-                <button id="send-button" class="btn btn-primary">Send</button>
-            </div>
+<div>
+    <div id="chat-box" class="bg-light p-3 mb-3 rounded">
+        <blockquote style="border-left: 4px solid #43a047;">Bot: Can you guess what am I thinking?</blockquote>
+    </div>
+    <progress id="progress-bar" style="display: none"></progress>
+    <div class="input-group">
+        <input id="chat-input" type="text" class="form-control" placeholder="Type your message...">
+        <div class="input-group-append">
+            <button id="send-button" class="btn btn-primary">Guess</button>
+            <button id="quit-button">Give Up</button>
         </div>
     </div>
 </div>
@@ -19,20 +19,158 @@
 {% block script %}
 <script>
 $(function() {
+    const items = [
+    "Eiffel Tower",
+    "Pineapple",
+    "Mona Lisa",
+    "Grand Canyon",
+    "Penguin",
+    "Rainbow",
+    "Pyramids of Giza",
+    "Chocolate Cake",
+    "Great Wall of China",
+    "Blue Whale",
+    "Soccer Ball",
+    "Sunglasses",
+    "Taj Mahal",
+    "Giraffe",
+    "Thunderstorm",
+    "Electric Guitar",
+    "Mount Everest",
+    "Ice Cream Sundae",
+    "Kangaroo",
+    "Solar System",
+    "Rubik's Cube",
+    "Bamboo",
+    "Statue of Liberty",
+    "Volcano",
+    "Smartphone",
+    "Dragon",
+    "Northern Lights",
+    "Laptop Computer",
+    "Dolphin",
+    "Rainforest",
+    "Airplane",
+    "Yoga Mat",
+    "Pirate Ship",
+    "Unicorn",
+    "Snowflake",
+    "Telescope",
+    "Cherry Blossom",
+    "Parrot",
+    "Hot Air Balloon",
+    "Mars",
+    "Piano",
+    "Roller Coaster",
+    "Shark",
+    "Empire State Building",
+    "Skateboard",
+    "Polar Bear",
+    "Cup of Coffee",
+    "Windmill",
+    "Cactus",
+    "Sphinx",
+    "Butterfly",
+    "Sushi",
+    "Redwood Tree",
+    "Guitar",
+    "Helicopter",
+    "Scuba Diver",
+    "Ferris Wheel",
+    "Jellyfish",
+    "Castle",
+    "Compass",
+    "Zebra",
+    "Sunflower",
+    "Motorcycle",
+    "Pyramid",
+    "Owl",
+    "Surfboard",
+    "Colosseum",
+    "Elephant",
+    "Lighthouse",
+    "Turtle",
+    "Nebula",
+    "Acoustic Guitar",
+    "Lion",
+    "Ice Skates",
+    "Spaceship",
+    "Dinosaur",
+    "Chess Board",
+    "Satellite",
+    "Banana",
+    "Coral Reef",
+    "Saxophone",
+    "Hippopotamus",
+    "Leaning Tower of Pisa",
+    "Cruise Ship",
+    "Golden Gate Bridge",
+    "Ladybug",
+    "Waterfall",
+    "Book",
+    "Kite",
+    "Viking Ship",
+    "Bicycle",
+    "Globe",
+    "Seashell",
+    "Chameleon",
+    "Venice Gondola",
+    "Panda",
+    "Hot Dog",
+    "Camel",
+    "Macaw",
+    "Violin",
+    "Palm Tree",
+    "Penguin",
+    "Pineapple",
+    "Rainbow",
+    "Soccer Ball",
+    "Sunglasses",
+    "Taj Mahal",
+    "Giraffe",
+    "Thunderstorm",
+    "Electric Guitar",
+    "Mount Everest",
+    "Ice Cream Sundae",
+    "Kangaroo",
+    "Solar System",
+    "Rubik's Cube",
+    "Bamboo"
+];
+
+    var actual_item = items[Math.floor(Math.random()*items.length)];
+
+    $('#chat-input').keypress(function(e) {
+        if(e.which == 13) { // 13 is the Enter key
+            $('#send-button').click();
+        }
+    });
+
+    $('#quit-button').click(function() {
+        $('#chat-box').append('<blockquote style="border-left: 4px solid red;">Bot: The answer was ' + actual_item + '</blockquote>');
+        $('#chat-input').val('');
+        $('#chat-input').prop('disabled', true);
+        $('#send-button').prop('disabled', true);
+        $('#quit-button').prop('disabled', true);
+    });
+
     $('#send-button').click(function() {
         var input = $('#chat-input').val().trim();
         if (input !== '') {
             $('#chat-box').append('<blockquote style="border-left: 4px solid dodgerblue;">User: ' + input + '</blockquote>');
             $('#chat-input').val('');
+            $('#progress-bar').show();
             // Use AJAX to send the input to the server and get a response
             $.ajax({
-                url: '/chat/' + encodeURIComponent(input),
+                url: '/chat/' + encodeURIComponent(input) + '/' + encodeURIComponent(actual_item),
                 type: 'GET',
                 success: function(data) {
                     $('#chat-box').append('<blockquote style="border-left: 4px solid #43a047;">Bot: ' + data.response + '</blockquote>');
+                    $('#progress-bar').hide();
                 },
                 error: function() {
                     $('#chat-box').append('<blockquote style="border-left: 4px solid red;">Bot: Sorry, I am not able to respond at the moment.</blockquote>');
+                    $('#progress-bar').hide();
                 }
             });
         }
