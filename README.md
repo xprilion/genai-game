@@ -1,2 +1,2 @@
-# docker-python-http-dump-example
-A sample docker application written in python that simply dumps the HTTP request header.
+# Guessing game with Gen AI
+A sample Flask app for playing a guessing game with Google's Language models via Vertex AI
