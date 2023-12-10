@@ -2,3 +2,4 @@ google-cloud-aiplatform
 flask
 flask-cors
 marko
+google-generativeai
