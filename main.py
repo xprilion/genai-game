@@ -4,21 +4,21 @@
 import os
 from flask import Flask, request, Response, g, render_template, jsonify
 import marko
-import vertexai
-from vertexai.language_models import TextGenerationModel
+import google.generativeai as genai
+
+genai.configure(api_key=os.getenv("API_KEY"))
 
 app = Flask(__name__)
 app.debug = True
 
-vertexai.init(project="gcp-adventure-x", location="us-central1")
-parameters = {
-    "temperature": 1,
-    "max_output_tokens": 256,
-    "top_p": 0.8,
-    "top_k": 40
-}
 
-model = TextGenerationModel.from_pretrained("text-bison@001")
+defaults = {
+  'model': 'models/chat-bison-001',
+  'temperature': 0.25,
+  'candidate_count': 1,
+  'top_k': 40,
+  'top_p': 0,
+}
 
 
 @app.route('/', methods=['GET'])
@@ -27,16 +27,43 @@ def hello_world():
 
 @app.route('/chat/<guess>/<actual>', methods=['GET'])
 def chat(guess, actual):
-    response = model.predict(
-        "You are the bot in a guessing game where the player tries to guess a secret item you are thinking about. " +
-        "The rules of the game are: 1. the player will make a guess. 2. if the guess is correct or very close to the correct answer, you will say, 'Congratulations, you've got it right!' " +
-         "3. If they are not very close to the actual item, respond with a humorous remark about their guess. Then without mentioning the actual item, " + actual + ", provide a subtle hint to guide the player closer to the secret item." +
-        "The player has just guessed " + guess + ".",
-        **parameters
+
+    context = "You are the bot in a guessing game where the player tries to guess a secret item you are thinking about. " + \
+        "The rules of the game are: " + \
+        "1. the player will make a guess. " + \
+        "2. if the guess is correct or very close to the correct answer, you will say, 'Congratulations, you've got it right!' " + \
+        "3. If they are not very close to the actual item, respond with a humorous remark about their guess. Then without mentioning the actual item, " + actual + ", provide exactly one hint to guide the player closer to the secret item. Don't repeat player's input. Don't give many hints at once."
+    
+    examples = [
+        [
+            "actual_item: cat. player_input: is it green",
+            "They are mostly never green but are often found in black, white and mixed colors."
+        ],
+        [
+            "actual_item: cat. player_input: a car?",
+            "Instead of four wheels it has four legs!"
+        ],
+        [
+            "actual_item: cat. player_input: a dog?",
+            "You're very close! Yes it is a pet, but not a dog!"
+        ],
+        [
+            "actual_item: cat. player_input: is it a cat?",
+            "Congratulations, yes it is a cat!"
+        ]
+    ]
+
+    prompt = "actual_input: " + actual + ". player_input: " + guess
+
+    response = genai.chat(
+        **defaults,
+        context=context,
+          examples=examples,
+        messages=[prompt]
     )
 
     return jsonify({
-        "response": marko.convert(response.text)
+        "response": marko.convert(response.last)
     })
 
 
