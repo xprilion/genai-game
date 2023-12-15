@@ -5,6 +5,7 @@ import os
 from flask import Flask, request, Response, g, render_template, jsonify
 import marko
 import google.generativeai as genai
+import json
 
 genai.configure(api_key=os.getenv("API_KEY"))
 
@@ -12,14 +13,35 @@ app = Flask(__name__)
 app.debug = True
 
 
-defaults = {
-  'model': 'models/chat-bison-001',
-  'temperature': 0.25,
-  'candidate_count': 1,
-  'top_k': 40,
-  'top_p': 0,
+config = {
+  'temperature': 0,
+  'top_k': 20,
+  'top_p': 0.9,
+  'max_output_tokens': 500
 }
 
+safety_settings = [
+  {
+    "category": "HARM_CATEGORY_HARASSMENT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_HATE_SPEECH",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  },
+  {
+    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+  }
+]
+
+model = genai.GenerativeModel(model_name="gemini-pro",
+                              generation_config=config,
+                              safety_settings=safety_settings)
 
 @app.route('/', methods=['GET'])
 def hello_world():
@@ -55,15 +77,10 @@ def chat(guess, actual):
 
     prompt = "actual_input: " + actual + ". player_input: " + guess
 
-    response = genai.chat(
-        **defaults,
-        context=context,
-          examples=examples,
-        messages=[prompt]
-    )
+    response = model.generate_content(context + "\n\nExamples: " + json.dumps(examples) + "\n\n" + prompt)
 
     return jsonify({
-        "response": marko.convert(response.last)
+        "response": marko.convert(response.text)
     })
 
 
